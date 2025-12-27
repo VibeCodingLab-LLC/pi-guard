@@ -1,0 +1,102 @@
+# =============================================================================
+# Pi Guard - Hardened SSH Configuration
+# /etc/ssh/sshd_config
+#
+# Initial setup: Password auth ENABLED (for first login)
+# After key setup: Run harden-ssh.sh to disable passwords
+# =============================================================================
+
+# Network
+Port 22
+AddressFamily inet
+ListenAddress 0.0.0.0
+
+# Protocol
+Protocol 2
+
+# Host keys
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+# =============================================================================
+# Authentication
+# =============================================================================
+
+# Root login disabled
+PermitRootLogin no
+
+# Limit attempts
+MaxAuthTries 3
+MaxSessions 3
+
+# Key-based auth (always enabled)
+PubkeyAuthentication yes
+
+# Password auth (enabled for initial setup, disable via harden-ssh.sh)
+PasswordAuthentication yes
+
+# No empty passwords ever
+PermitEmptyPasswords no
+
+# Disable challenge-response
+ChallengeResponseAuthentication no
+
+# =============================================================================
+# Security Restrictions
+# =============================================================================
+
+# Disable X11 forwarding (not needed)
+X11Forwarding no
+
+# Disable TCP forwarding (not needed)
+AllowTcpForwarding no
+
+# Disable agent forwarding
+AllowAgentForwarding no
+
+# Disable tunneling
+PermitTunnel no
+
+# Disable gateway ports
+GatewayPorts no
+
+# =============================================================================
+# Session Settings
+# =============================================================================
+
+# Login timeout (30 seconds to authenticate)
+LoginGraceTime 30
+
+# Idle timeout (5 minutes)
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# =============================================================================
+# Logging
+# =============================================================================
+
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# =============================================================================
+# Strong Cryptography
+# =============================================================================
+
+# Key exchange algorithms
+KexAlgorithms curve25519-sha256@libssh.org,curve25519-sha256,diffie-hellman-group-exchange-sha256
+
+# Ciphers
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+
+# MACs
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# =============================================================================
+# Group Restriction (activated by harden-ssh.sh)
+# =============================================================================
+# AllowGroups sshusers
+
+# =============================================================================
+# Subsystems
+# =============================================================================
+Subsystem sftp /usr/lib/openssh/sftp-server

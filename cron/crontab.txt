@@ -1,0 +1,79 @@
+# =============================================================================
+# Pi Guard - Cron Jobs Reference
+# /var/spool/cron/crontabs/root
+#
+# This file is installed automatically by install.sh
+# To modify: sudo crontab -e
+# =============================================================================
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# =============================================================================
+# MONITORING (Continuous)
+# =============================================================================
+
+# Monitor fail2ban every 5 minutes
+# Alerts on new SSH bans
+*/5 * * * * /usr/local/bin/monitor-fail2ban.sh >> /var/log/pi-guard/cron.log 2>&1
+
+# Monitor Pi-hole every hour
+# Auto-restarts if down, alerts on high block rate
+0 * * * * /usr/local/bin/monitor-pihole.sh >> /var/log/pi-guard/cron.log 2>&1
+
+# Monitor Snort every 10 minutes (Pi 3A+ only)
+# Only alerts on Priority 1 (High) events
+*/10 * * * * [ -f /var/log/snort/alert ] && /usr/local/bin/monitor-snort.sh >> /var/log/pi-guard/cron.log 2>&1
+
+# Monitor arpwatch every 15 minutes (Pi 3A+ only)
+# Detects ARP spoofing and new devices
+*/15 * * * * [ -f /var/lib/arpwatch/arp.dat ] && /usr/local/bin/monitor-arpwatch.sh >> /var/log/pi-guard/cron.log 2>&1
+
+# =============================================================================
+# AUTO-RECOVERY
+# =============================================================================
+
+# Auto-restart services if down (every 15 minutes)
+*/15 * * * * systemctl is-active --quiet pihole-FTL || systemctl restart pihole-FTL
+*/15 * * * * systemctl is-active --quiet unbound || systemctl restart unbound
+
+# =============================================================================
+# REPORTS
+# =============================================================================
+
+# Daily security report at 8 AM
+# Includes: system health, top blocked domains, attack stats
+0 8 * * * /usr/local/bin/daily-report.sh >> /var/log/pi-guard/cron.log 2>&1
+
+# =============================================================================
+# UPDATES
+# =============================================================================
+
+# Update Pi-hole blocklists (Sunday 3 AM)
+0 3 * * 0 pihole -g >> /var/log/pi-guard/pihole-update.log 2>&1
+
+# Update Snort rules (Sunday 4 AM)
+0 4 * * 0 [ -d /etc/snort ] && /usr/local/bin/update-snort-rules.sh >> /var/log/pi-guard/snort-update.log 2>&1
+
+# Update DNS root hints (1st of month, 4 AM)
+0 4 1 * * wget -q -O /var/lib/unbound/root.hints https://www.internic.net/domain/named.root && systemctl restart unbound
+
+# =============================================================================
+# MAINTENANCE
+# =============================================================================
+
+# Rotate old logs (Saturday midnight)
+0 0 * * 6 find /var/log/pi-guard -name "*.log" -mtime +14 -delete
+0 0 * * 6 find /var/log/pi-guard -name "*.log.*" -mtime +7 -delete
+
+# Retry failed alerts (every 30 minutes)
+*/30 * * * * /usr/local/bin/retry-failed-alerts.sh >> /var/log/pi-guard/cron.log 2>&1
+
+# =============================================================================
+# OPTIONAL: Scheduled Snort (Uncomment to run only during specific hours)
+# =============================================================================
+# Start Snort at 6 PM
+# 0 18 * * * systemctl start snort
+
+# Stop Snort at midnight
+# 0 0 * * * systemctl stop snort
