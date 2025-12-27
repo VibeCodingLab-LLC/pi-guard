@@ -1,8 +1,9 @@
 ## 🔮 Tech Stack
 
-<img src="https://img.shields.io/badge/Raspberry%20Pi-0D1117?style=for-the-badge&logo=raspberrypi&logoColor=FF1493" height="60">
-<img src="https://img.shields.io/badge/Linux-0D1117?style=for-the-badge&logo=linux&logoColor=00FFFF" height="50">
-<img src="https://img.shields.io/badge/Shell_Script-0D1117?style=for-the-badge&logo=gnu-bash&logoColor=FF00FF" height="40">
+<img src="https://img.shields.io/badge/Raspberry%20Pi-0D1117?style=for-the-badge&logo=raspberrypi&logoColor=FF1493" height="90">
+<img src="https://img.shields.io/badge/Linux-0D1117?style=for-the-badge&logo=linux&logoColor=00FFFF" height="90">
+<img src="https://img.shields.io/badge/Shell_Script-0D1117?style=for-the-badge&logo=gnu-bash&logoColor=FF00FF" height="90">
+
 ![Pi-hole](https://img.shields.io/badge/Pi--hole-0D1117?style=for-the-badge&logo=pihole&logoColor=00D4FF)
 ![Docker](https://img.shields.io/badge/Docker-0D1117?style=for-the-badge&logo=docker&logoColor=FF1493)
 ![Snort](https://img.shields.io/badge/Snort-0D1117?style=for-the-badge&logo=snort&logoColor=00FFFF)
