@@ -1,8 +1,26 @@
+## 🔮 Tech Stack
+
+![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-0D1117?style=flat&logo=raspberrypi&logoColor=FF1493)
+![Linux](https://img.shields.io/badge/Linux-0D1117?style=flat&logo=linux&logoColor=00FFFF)
+![Shell Script](https://img.shields.io/badge/Shell_Script-0D1117?style=flat&logo=gnu-bash&logoColor=FF00FF)
+![Pi-hole](https://img.shields.io/badge/Pi--hole-0D1117?style=flat&logo=pihole&logoColor=00D4FF)
+![Docker](https://img.shields.io/badge/Docker-0D1117?style=flat&logo=docker&logoColor=FF1493)
+![Snort](https://img.shields.io/badge/Snort-0D1117?style=flat&logo=snort&logoColor=00FFFF)
+
+---
+
+## ⚡ Cloud / Infra
+
+![DigitalOcean](https://img.shields.io/badge/DigitalOcean-0D1117?style=flat&logo=digitalocean&logoColor=FF00FF)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-0D1117?style=flat&logo=cloudflare&logoColor=00D4FF)
+
+---
+
 # Pi Guard
 
 **Hardened network security appliance for Raspberry Pi**
 
-Turn a €15-40 Raspberry Pi into a 24/7 security appliance that blocks malware, encrypts DNS, detects intrusions, and alerts you on your phone.
+Turn any Raspberry Pi into a 24/7 security appliance that blocks malware, encrypts DNS, detects intrusions, and alerts you on your phone.
 
 ---
 
