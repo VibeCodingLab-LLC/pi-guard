@@ -8,13 +8,14 @@
 ![Docker](https://img.shields.io/badge/Docker-0D1117?style=for-the-badge&logo=docker&logoColor=FF1493)
 ![Snort](https://img.shields.io/badge/Snort-0D1117?style=for-the-badge&logo=snort&logoColor=00FFFF)
 
---
+---
 
 ## ⚡ Cloud / Infrastructure
 
-![DigitalOcean](https://img.shields.io/badge/DigitalOcean-0D1117?style=for-the-badge&logo=digitalocean&logoColor=FF00FF)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-0D1117?style=for-the-badge&logo=cloudflare&logoColor=00D4FF)
-
+![Chaturbate](https://img.shields.io/badge/Chaturbate-FF6B00?style=for-the-badge&logo=webcam&logoColor=white)
+![OnlyFans](https://img.shields.io/badge/OnlyFans-00AFF0?style=for-the-badge&logo=heart&logoColor=white)
+![Lovense](https://img.shields.io/badge/Lovense-FF69B4?style=for-the-badge&logo=bluetooth&logoColor=white)
+![CAM4](https://img.shields.io/badge/CAM4-FF1493?style=for-the-badge&logo=video&logoColor=white)
 ---
 
 # Pi Guard
