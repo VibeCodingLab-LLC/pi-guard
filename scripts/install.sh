@@ -30,11 +30,44 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # =============================================================================
+# =============================================================================
 # Functions
 # =============================================================================
 
+# Function to restart zram, pihole, and unbound before the script stops
+finalize_services() {
+    echo -e "\n[*] Finalizing core services before exit..."
+
+    # Restart ZRAM (Force reset to handle 'device busy' errors)
+    sudo swapoff /dev/zram0 2>/dev/null || true
+    sudo zramctl --reset /dev/zram0 2>/dev/null || true
+    sudo systemctl restart zramswap.service 2>/dev/null || true
+
+    # Restart Pi-hole and Unbound
+    sudo systemctl restart pihole-FTL 2>/dev/null || true
+    sudo systemctl restart unbound 2>/dev/null || true
+
+    echo "[*] Service sync complete."
+}
+
+# Set trap to run finalize_services on script exit, error, or interruption
+trap finalize_services EXIT
+
 print_banner() {
     echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║                                                           ║"
+    echo "║   ██████╗ ██╗     ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗║"
+    echo "║   ██╔══██╗██║    ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗"
+    echo "║   ██████╔╝██║    ██║  ███╗██║   ██║███████║██████╔╝██║  ██║"
+    echo "║   ██╔═══╝ ██║    ██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║"
+    echo "║   ██║     ██║    ╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝"
+    echo "║   ╚═╝     ╚═╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ "
+    echo "║                                                           ║"
+    echo "║              Network Security Appliance                   ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+}
     echo "╔═══════════════════════════════════════════════════════════╗"
     echo "║                                                           ║"
     echo "║   ██████╗ ██╗     ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗║"
@@ -205,8 +238,7 @@ install_pihole() {
     fi
     
     mkdir -p /etc/pihole
-    cat > /etc/pihole/setupVars.conf << EOF
-WEBPASSWORD=
+cat > /etc/pihole/setupVars.conf << EOF 2>/dev/null || true\nWEBPASSWORD=
 PIHOLE_INTERFACE=$INTERFACE
 IPV4_ADDRESS=0.0.0.0
 IPV6_ADDRESS=
@@ -318,8 +350,7 @@ EOF
     systemctl restart unbound
     
     # Update Pi-hole to use Unbound
-    sed -i 's/PIHOLE_DNS_1=.*/PIHOLE_DNS_1=127.0.0.1#5335/' /etc/pihole/setupVars.conf
-    pihole restartdns
+sed -i 's/PIHOLE_DNS_1=.*/PIHOLE_DNS_1=127.0.0.1#5335/' /etc/pihole/setupVars.conf 2>/dev/null || true\n    pihole restartdns
     
     # Verify
     sleep 2
