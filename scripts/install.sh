@@ -5,6 +5,7 @@
 #
 # Features:
 #   - Hardware auto-detection (Zero W / 3A+ / 3B+/4)
+#   - Automatic retry logic for failed installations
 #   - zram for memory optimization
 #   - Telemetry disabled
 #   - Tuned Snort rules for Pi hardware
@@ -12,7 +13,8 @@
 #   - Priority-based alerting
 # =============================================================================
 
-set -e
+# Don't exit on error - we'll handle errors ourselves with retry logic
+set +e
 
 # Colors
 RED='\033[0;31m'
@@ -68,19 +70,6 @@ print_banner() {
     echo "╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
-    echo "╔═══════════════════════════════════════════════════════════╗"
-    echo "║                                                           ║"
-    echo "║   ██████╗ ██╗     ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗║"
-    echo "║   ██╔══██╗██║    ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗"
-    echo "║   ██████╔╝██║    ██║  ███╗██║   ██║███████║██████╔╝██║  ██║"
-    echo "║   ██╔═══╝ ██║    ██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║"
-    echo "║   ██║     ██║    ╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝"
-    echo "║   ╚═╝     ╚═╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ "
-    echo "║                                                           ║"
-    echo "║              Network Security Appliance                   ║"
-    echo "╚═══════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-}
 
 log() {
     echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1"
@@ -92,7 +81,32 @@ warn() {
 
 error() {
     echo -e "${RED}[ERROR]${NC} $1"
-    exit 1
+    return 1
+}
+
+# Retry function for critical operations
+retry_command() {
+    local max_attempts=3
+    local timeout=2
+    local attempt=1
+    local cmd="$@"
+
+    while [ $attempt -le $max_attempts ]; do
+        echo -e "${YELLOW}[Attempt $attempt/$max_attempts]${NC} $cmd"
+        if eval "$cmd"; then
+            return 0
+        else
+            if [ $attempt -lt $max_attempts ]; then
+                echo -e "${YELLOW}[Retry]${NC} Waiting ${timeout}s before retry..."
+                sleep $timeout
+                timeout=$((timeout * 2))
+            fi
+            attempt=$((attempt + 1))
+        fi
+    done
+
+    echo -e "${RED}[FAILED]${NC} Command failed after $max_attempts attempts: $cmd"
+    return 1
 }
 
 # =============================================================================
@@ -174,13 +188,13 @@ check_internet() {
 
 update_system() {
     log "Updating system packages..."
-    apt update
-    apt upgrade -y
+    retry_command "apt update" || warn "apt update failed, continuing..."
+    retry_command "DEBIAN_FRONTEND=noninteractive apt upgrade -y" || warn "apt upgrade failed, continuing..."
 }
 
 install_dependencies() {
     log "Installing dependencies..."
-    apt install -y \
+    retry_command "DEBIAN_FRONTEND=noninteractive apt install -y \
         curl wget git \
         dnsutils net-tools \
         iptables iptables-persistent \
@@ -191,7 +205,7 @@ install_dependencies() {
         jq \
         bc \
         msmtp msmtp-mta \
-        unattended-upgrades
+        unattended-upgrades" || warn "Some dependencies failed to install, continuing..."
 }
 
 # =============================================================================
@@ -655,7 +669,7 @@ disable_telemetry() {
 
 setup_auto_updates() {
     log "Enabling automatic security updates..."
-    
+
     cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'EOF'
 Unattended-Upgrade::Origins-Pattern {
     "origin=Debian,codename=${distro_codename},label=Debian-Security";
@@ -674,6 +688,57 @@ APT::Periodic::AutocleanInterval "7";
 EOF
 
     log "Automatic security updates enabled"
+}
+
+# =============================================================================
+# Setup Command Aliases
+# =============================================================================
+
+setup_aliases() {
+    log "Setting up command aliases..."
+
+    # Copy menu script to /usr/local/bin
+    cp "$SCRIPT_DIR/scripts/piguard-menu.sh" /usr/local/bin/piguard-menu.sh
+    chmod +x /usr/local/bin/piguard-menu.sh
+
+    # Create symlinks in /usr/local/bin for easy access
+    ln -sf "$SCRIPT_DIR/scripts/install.sh" /usr/local/bin/piguard-install
+    ln -sf "$SCRIPT_DIR/scripts/update.sh" /usr/local/bin/piguard-update
+    ln -sf "$SCRIPT_DIR/scripts/verify.sh" /usr/local/bin/piguard-verify
+
+    # Create the main piguard menu command
+    cat > /usr/local/bin/piguard << 'MENUEOF'
+#!/bin/bash
+# Pi Guard Menu System
+exec bash /usr/local/bin/piguard-menu.sh "$@"
+MENUEOF
+
+    chmod +x /usr/local/bin/piguard
+
+    # Create bash aliases for pi user
+    if [ -f /home/pi/.bashrc ]; then
+        # Remove old aliases if they exist
+        sed -i '/# Pi Guard aliases/d' /home/pi/.bashrc
+        sed -i '/alias install=/d' /home/pi/.bashrc
+        sed -i '/alias update=/d' /home/pi/.bashrc
+        sed -i '/alias verify=/d' /home/pi/.bashrc
+
+        # Add new aliases
+        cat >> /home/pi/.bashrc << 'ALIASEOF'
+
+# Pi Guard aliases
+alias install='sudo piguard-install'
+alias update='sudo piguard-update'
+alias verify='sudo piguard-verify'
+ALIASEOF
+        chown pi:pi /home/pi/.bashrc
+    fi
+
+    log "Command aliases created:"
+    log "  - Type 'piguard' for the main menu"
+    log "  - Type 'sudo install' to run installer"
+    log "  - Type 'sudo update' to update"
+    log "  - Type 'sudo verify' to verify system"
 }
 
 # =============================================================================
@@ -703,13 +768,17 @@ print_summary() {
     [ "$INSTALL_ARPWATCH" = true ] && echo "    ✓ arpwatch (ARP spoofing detection)"
     [ "$INSTALL_IDS" = true ] && echo "    ✓ Snort 3 (IDS - disabled, tune first)"
     echo ""
+    echo -e "  ${YELLOW}Quick Commands:${NC}"
+    echo "    ${GREEN}piguard${NC}        - Launch main menu"
+    echo "    ${GREEN}sudo update${NC}    - Update all components"
+    echo "    ${GREEN}sudo verify${NC}    - Check system health"
+    echo ""
     echo -e "  ${YELLOW}Next Steps:${NC}"
-    echo "    1. Configure alerts: nano ~/.config/pi-guard/telegram.conf"
-    echo "    2. Test alerts: bash /usr/local/bin/alerts/send-telegram.sh 'Test'"
-    echo "    3. Verify: bash ~/pi-guard/scripts/verify.sh"
+    echo "    1. Run: ${GREEN}piguard${NC} to access the control panel"
+    echo "    2. Configure alerts in the menu or manually"
+    echo "    3. Point router DNS to: $PI_IP"
     echo "    4. Setup SSH keys, then run: sudo bash ~/pi-guard/scripts/harden-ssh.sh"
-    echo "    5. Point router DNS to: $PI_IP"
-    [ "$INSTALL_IDS" = true ] && echo "    6. Tune Snort: see docs/SNORT-TUNING.md"
+    [ "$INSTALL_IDS" = true ] && echo "    5. Tune Snort: see docs/SNORT-TUNING.md"
     echo ""
     echo -e "  ${CYAN}Memory:${NC} $(free -m | awk 'NR==2{printf "%dMB / %dMB (%.0f%%)", $3, $2, $3*100/$2}')"
     echo ""
@@ -726,9 +795,9 @@ main() {
     check_root
     check_internet
     detect_hardware
-    
+
     log "Starting installation..."
-    
+
     update_system
     install_dependencies
     install_zram
@@ -744,7 +813,8 @@ main() {
     setup_cron
     disable_telemetry
     setup_auto_updates
-    
+    setup_aliases
+
     print_summary
 }
 
