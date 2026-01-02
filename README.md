@@ -75,10 +75,22 @@ git clone https://github.com/yourusername/pi-guard.git
 cd pi-guard
 sudo bash scripts/install.sh
 
-# 4. Follow the prompts
+# 4. Access the control panel
+piguard
 ```
 
 **Total time:** 30-60 minutes depending on hardware
+
+### New! Simplified Commands
+
+After installation, you can use these simple commands:
+
+```bash
+piguard        # Interactive menu for all features
+sudo install   # Reinstall/update Pi Guard
+sudo update    # Update all components
+sudo verify    # Check system health
+```
 
 ---
 
@@ -108,7 +120,8 @@ sudo bash scripts/install.sh
 ```
 pi-guard/
 ├── scripts/
-│   ├── install.sh           # Single modular installer (detects hardware)
+│   ├── install.sh           # Smart installer with auto hardware detection
+│   ├── piguard-menu.sh      # Interactive control panel
 │   ├── verify.sh            # System health check
 │   ├── update.sh            # Update all components
 │   └── harden-ssh.sh        # Switch to key-only SSH
@@ -130,18 +143,33 @@ pi-guard/
 ├── cron/
 │   └── alerts/
 │       ├── send-telegram.sh # With retry logic
-│       ├── send-discord.sh  
-│       └── send-email.sh    
+│       ├── send-discord.sh
+│       └── send-email.sh
 │
 ├── docs/
 │   ├── ALERTS.md            # Alert setup guide
 │   ├── HARDENING.md         # Advanced hardening
 │   ├── SNORT-TUNING.md      # IDS optimization
-│   └── TROUBLESHOOTING.md   
+│   └── TROUBLESHOOTING.md
 │
 └── tests/
     └── test-*.sh            # Verification scripts
 ```
+
+## Features
+
+### 🎯 Interactive Control Panel
+
+Pi Guard now includes a user-friendly terminal menu system:
+
+- **System Management**: Install, update, verify
+- **Service Control**: Start/stop/restart services
+- **Alert Configuration**: Set up Telegram, Discord, Email alerts
+- **Log Viewing**: Quick access to all system logs
+- **System Info**: Real-time status and statistics
+- **Network Status**: DNS testing and connectivity checks
+
+Access it anytime by typing: `piguard`
 
 ---
 
